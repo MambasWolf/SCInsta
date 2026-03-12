@@ -26,23 +26,36 @@ static NSString *randomReelsMessage() {
 // Intercept tap on the Reels tab button and show a random deterrent message
 %hook IGTabBarButton
 
-- (void)sendActionsForControlEvents:(UIControlEvents)controlEvents {
-    if ([self.accessibilityIdentifier isEqualToString:@"clips-tab"]) {
-        UIAlertController *alert = [UIAlertController
-            alertControllerWithTitle:@"Acces bloque"
-            message:randomReelsMessage()
-            preferredStyle:UIAlertControllerStyleAlert];
+- (void)didMoveToSuperview {
+    %orig;
 
-        [alert addAction:[UIAlertAction
-            actionWithTitle:@"OK"
-            style:UIAlertActionStyleDefault
-            handler:nil]];
+    if (![self.accessibilityIdentifier isEqualToString:@"clips-tab"]) return;
 
-        [topMostController() presentViewController:alert animated:YES completion:nil];
-        return; // Block navigation to Reels
+    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleReelsTap:)];
+    tap.cancelsTouchesInView = YES;
+
+    // Priorité sur les gesture recognizers existants d'Instagram
+    for (UIGestureRecognizer *existing in self.gestureRecognizers) {
+        [existing requireGestureRecognizerToFail:tap];
     }
 
-    %orig;
+    [self addGestureRecognizer:tap];
+}
+
+%new - (void)handleReelsTap:(UITapGestureRecognizer *)sender {
+    if (sender.state != UIGestureRecognizerStateRecognized) return;
+
+    UIAlertController *alert = [UIAlertController
+        alertControllerWithTitle:@"Accès bloqué"
+        message:randomReelsMessage()
+        preferredStyle:UIAlertControllerStyleAlert];
+
+    [alert addAction:[UIAlertAction
+        actionWithTitle:@"OK"
+        style:UIAlertActionStyleDefault
+        handler:nil]];
+
+    [topMostController() presentViewController:alert animated:YES completion:nil];
 }
 
 %end
