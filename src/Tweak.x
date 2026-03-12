@@ -41,6 +41,12 @@ BOOL dmVisualMsgsViewedButtonEnabled = false;
         @"enable_notes_customization": @(YES),
         @"custom_note_themes": @(YES),
         @"disable_auto_unmuting_reels": @(YES),
+        @"hide_reels_header": @(YES),
+        @"hide_reels_blend": @(YES),
+        @"no_suggested_post": @(YES),
+        @"no_suggested_account": @(YES),
+        @"no_suggested_reels": @(YES),
+        @"no_suggested_threads": @(YES),
         @"doom_scrolling_reel_count": @(1)
     };
     [[NSUserDefaults standardUserDefaults] registerDefaults:sciDefaults];
