@@ -3,8 +3,20 @@
 @implementation SCIUtils
 
 + (BOOL)getBoolPref:(NSString *)key {
-    if (![key length] || [[NSUserDefaults standardUserDefaults] objectForKey:key] == nil) return false;
+    if (![key length]) return false;
 
+    // These features are permanently enabled and cannot be changed by the user
+    static NSSet *hardcodedEnabled;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        hardcodedEnabled = [NSSet setWithObjects:
+            @"disable_scrolling_reels",
+            @"hide_entire_feed",
+        nil];
+    });
+    if ([hardcodedEnabled containsObject:key]) return YES;
+
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:key] == nil) return false;
     return [[NSUserDefaults standardUserDefaults] boolForKey:key];
 }
 + (double)getDoublePref:(NSString *)key {
