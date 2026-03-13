@@ -23,28 +23,39 @@ static NSString *randomReelsMessage() {
     return messages[arc4random_uniform((uint32_t)messages.count)];
 }
 
-%hook IGTabBarButton
+// Hook the actual Reels view controller — guaranteed to fire when Reels appear
+%hook IGSundialFeedViewController
 
-- (void)sendActionsForControlEvents:(UIControlEvents)controlEvents {
-    if ((controlEvents & UIControlEventTouchUpInside) &&
-        [self.accessibilityIdentifier isEqualToString:@"clips-tab"]) {
-
-        UIViewController *topVC = topMostController();
-        UIAlertController *alert = [UIAlertController
-            alertControllerWithTitle:@"Accès bloqué"
-            message:randomReelsMessage()
-            preferredStyle:UIAlertControllerStyleAlert];
-
-        [alert addAction:[UIAlertAction
-            actionWithTitle:@"OK"
-            style:UIAlertActionStyleDefault
-            handler:nil]];
-
-        [topVC presentViewController:alert animated:YES completion:nil];
-        return;
-    }
-
+- (void)viewDidAppear:(BOOL)animated {
     %orig;
+
+    // Don't stack multiple alerts
+    if (self.presentedViewController) return;
+
+    // Block Reels content with an overlay
+    UIView *blocker = [self.view viewWithTag:31415];
+    if (!blocker) {
+        blocker = [[UIView alloc] initWithFrame:self.view.bounds];
+        blocker.tag = 31415;
+        blocker.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        blocker.backgroundColor = [UIColor blackColor];
+        blocker.userInteractionEnabled = YES;
+        [self.view addSubview:blocker];
+    }
+    [self.view bringSubviewToFront:blocker];
+
+    // Show random message
+    UIAlertController *alert = [UIAlertController
+        alertControllerWithTitle:@"Accès bloqué"
+        message:randomReelsMessage()
+        preferredStyle:UIAlertControllerStyleAlert];
+
+    [alert addAction:[UIAlertAction
+        actionWithTitle:@"OK"
+        style:UIAlertActionStyleDefault
+        handler:nil]];
+
+    [self presentViewController:alert animated:YES completion:nil];
 }
 
 %end
