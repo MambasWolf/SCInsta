@@ -29,25 +29,16 @@ static NSString *randomReelsMessage() {
 - (void)viewDidAppear:(BOOL)animated {
     %orig;
 
-    // Walk up the parent VC chain to check if we're in the main Reels tab
-    BOOL isMainReelsTab = NO;
-    UIViewController *parent = self.parentViewController;
-    while (parent) {
-        if ([parent isKindOfClass:%c(IGTabBarController)]) {
-            isMainReelsTab = YES;
-            break;
-        }
-        parent = parent.parentViewController;
-    }
-
-    // Reel opened from DMs — allow normally
-    if (!isMainReelsTab) {
+    // Reels opened from DMs are presented modally — allow them
+    UIViewController *presenter = self.presentingViewController;
+    if (!presenter) presenter = self.navigationController.presentingViewController;
+    if (presenter) {
         UIView *blocker = [self.view viewWithTag:31415];
         if (blocker) [blocker removeFromSuperview];
         return;
     }
 
-    // Main Reels tab — block it
+    // Main Reels tab (not presented modally) — block it
     if (self.presentedViewController) return;
 
     UIView *blocker = [self.view viewWithTag:31415];
