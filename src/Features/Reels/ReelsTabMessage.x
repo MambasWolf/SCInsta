@@ -23,16 +23,33 @@ static NSString *randomReelsMessage() {
     return messages[arc4random_uniform((uint32_t)messages.count)];
 }
 
-// Hook the actual Reels view controller — guaranteed to fire when Reels appear
+// Block the main Reels tab, but allow reels opened from DMs
 %hook IGSundialFeedViewController
 
 - (void)viewDidAppear:(BOOL)animated {
     %orig;
 
-    // Don't stack multiple alerts
+    // Walk up the parent VC chain to check if we're in the main Reels tab
+    BOOL isMainReelsTab = NO;
+    UIViewController *parent = self.parentViewController;
+    while (parent) {
+        if ([parent isKindOfClass:%c(IGTabBarController)]) {
+            isMainReelsTab = YES;
+            break;
+        }
+        parent = parent.parentViewController;
+    }
+
+    // Reel opened from DMs — allow normally
+    if (!isMainReelsTab) {
+        UIView *blocker = [self.view viewWithTag:31415];
+        if (blocker) [blocker removeFromSuperview];
+        return;
+    }
+
+    // Main Reels tab — block it
     if (self.presentedViewController) return;
 
-    // Block Reels content with an overlay
     UIView *blocker = [self.view viewWithTag:31415];
     if (!blocker) {
         blocker = [[UIView alloc] initWithFrame:self.view.bounds];
@@ -44,7 +61,6 @@ static NSString *randomReelsMessage() {
     }
     [self.view bringSubviewToFront:blocker];
 
-    // Show random message
     UIAlertController *alert = [UIAlertController
         alertControllerWithTitle:@"Accès bloqué"
         message:randomReelsMessage()
